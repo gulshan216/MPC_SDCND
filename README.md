@@ -1,5 +1,7 @@
 # CarND-Controls-MPC
 
+Using Model Predictive Control (MPC), this project involves writing a C++ program that can drive a simulated car around a virtual track using specific waypoints from the track itself. The simulated car's actuators have a 100ms latency (delay) that must be accounted for as well as part of the MPC calculation.
+
 ## Rubric Discussion Points
 
 * The model:
