@@ -2,7 +2,8 @@
 
 ## Rubric Discussion Points
 
-* The model
+* The model:
+
 The model used is a Kinematic model neglecting the complex interactions between the tires and the road. The model equations are as follow:
 
 ```
