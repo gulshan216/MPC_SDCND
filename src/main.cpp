@@ -98,7 +98,7 @@ int main() {
           double v = j[1]["speed"];
 
 
-          for(int i = 0; i < ptsx.size(); i++) {
+          for(size_t i = 0; i < ptsx.size(); i++) {
           //shift car reference angle to 90 degrees
           double shift_x = ptsx[i] - px;
           double shift_y = ptsy[i] - py;
@@ -129,7 +129,7 @@ int main() {
           psi = 0;
           px = v * latency;
           py = 0;
-          psi = psi + (v * delta / Lf) * latency;
+          psi = psi + ((v/ Lf)*delta*latency);
           cte = cte + (v * sin(epsi) * latency);
           epsi = epsi + psi;
 
@@ -168,7 +168,7 @@ int main() {
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
 
-          for(int i=2; i<vars.size(); i++)
+          for(size_t i=2; i<vars.size(); i++)
           {
             if(i%2 == 0)
             {
@@ -192,7 +192,7 @@ int main() {
           // the points in the simulator are connected by a Yellow line
 
           double poly_x, poly_y;
-          for(int i =0; i<10; i++)
+          for(size_t i =0; i<10; i++)
           {
           poly_x = i * 10.0;      
           poly_y = polyeval(coeffs, poly_x);
