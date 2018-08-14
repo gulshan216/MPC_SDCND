@@ -1,5 +1,59 @@
 # CarND-Controls-MPC
-Self-Driving Car Engineer Nanodegree Program
+
+## Rubric Discussion Points
+
+* The model
+The model used is a Kinematic model neglecting the complex interactions between the tires and the road. The model equations are as follow:
+
+```
+x[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
+y[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
+psi[t] = psi[t-1] + v[t-1] / Lf * delta[t-1] * dt
+v[t] = v[t-1] + a[t-1] * dt
+cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
+epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
+```
+Where:
+
+- `x, y` : Car's position.
+- `psi` : Car's heading direction.
+- `v` : Car's velocity.
+- `cte` : Cross-track error.
+- `epsi` : Orientation error.
+
+Those values are considered the state of the model. In addition to that, `Lf` is the distance between the car of mass and the front wheels (this is provided by Udacity's seed project). The other two values are the model output:
+
+- `a` : Car's acceleration (throttle).
+- `delta` : Steering angle.
+
+The objective is to find the acceleration (`a`) and the steering angle(`delta`) in the way it will minimize an objective function that is the combination of different factors such as `cte` and `epsi` and a few others.
+
+* Timestep Length and Elapsed Duration (N & dt):
+The number of points(`N`) and the time interval(`dt`) define the prediction horizon. I tried to keep the horizon around the same time the waypoints were on the simulator. With too many points the controller starts to run slower, and some times it went wild very easily. After trying with `N` from 10 to 20 , it caused too many oscillations and hence I decided to leave them fixed to 10 and 100 milliseconds to have a better result tuning the other parameters.
+
+* Polynomial Fitting and MPC Preprocessing:
+
+First the waypoints coordinates are transformed to use the car coordinates using the
+current poistion of the car (x,y) and the angle at which the car is pointing (-psi)
+This helps with 2 things: definint the state and the visualization of the points on the map
+This really makes the state very simple: state << 0, 0, 0, v, cte, epsi. 
+
+* Model Predictive Control with Latency:
+The state needs to account for latency. Since the car keeps going with the current state
+of the actuators, we simply include that movement on our calculated state: (0, 0, 0, v, cte, epsi)
+
+```
+px = v * latency;
+py = 0;
+psi = psi + ((v/ Lf)*delta*latency);
+cte = cte + (v * sin(epsi) * latency);
+epsi = epsi + psi;
+v  = v + accel * latency;
+```
+
+we use the previous value of the actuators to calculated this shift due the latency.
+Then the model is able to calculate an optimal path based on the state.
+
 
 ---
 
