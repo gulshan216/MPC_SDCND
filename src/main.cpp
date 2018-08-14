@@ -9,6 +9,11 @@
 #include "MPC.h"
 #include "json.hpp"
 
+double steer_value;
+double throttle_value;
+double accel = 0;
+double delta = 0;
+
 // for convenience
 using json = nlohmann::json;
 
@@ -111,30 +116,34 @@ int main() {
           auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
           
           //calculate cte and epsi
-          double cte = coeffs[0];
+          double cte = polyeval(coeffs,0);
           double epsi = -atan(coeffs[1]);
-          
-          v = v * 0.44704; //convert to m/s
-          
-          Eigen::VectorXd state(6);
-          
-              double latency = 0.10;
-          const double Lf = 2.67;
-          
-          delta_ = j[1]["steering_angle"];
-          delta_*= -1.0;
-              psi = 0;
-          px = v * latency;
-              py = 0;
-              psi = psi + (v * delta_ / Lf) * latency;
-              cte = cte + (v * sin(epsi) * latency);
-              epsi = epsi + psi;
 
-          v  = v + a_ * latency;
+          v = v/2.23694; //convert to m/s
+
+          double latency = 0.10;
+          double Lf = 2.67;
           
-          a_ = throttle_value;
+          delta = j[1]["steering_angle"];
+          delta*= -1.0;
+          psi = 0;
+          px = v * latency;
+          py = 0;
+          psi = psi + (v * delta / Lf) * latency;
+          cte = cte + (v * sin(epsi) * latency);
+          epsi = epsi + psi;
+
+          v  = v + accel * latency;
           
+          accel = throttle_value;
+
+          // double steer_value = j[1]["steering_angle"];
+          // double throttle_value = j[1]["throttle"];
+
+          Eigen::VectorXd state(6);
+          // state << 0, 0, 0, v, cte, epsi;
           state << px, py, psi, v, cte, epsi;
+
 
           auto vars = mpc.Solve(state, coeffs);
 
@@ -144,17 +153,13 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
-          double steer_value;
-          double throttle_value;
-
-          steer_value = -vars[0]/ deg2rad(25);
           throttle_value = vars[1]; 
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = throttle_value;
+          msgJson["steering_angle"] = -vars[0]/deg2rad(25);
+          msgJson["throttle"] = vars[1];
 
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals;
@@ -163,10 +168,17 @@ int main() {
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
 
-          for(int i =2; i<vars.size(); i=i+2)
+          for(int i=2; i<vars.size(); i++)
           {
-            mpc_x_vals.push_back(vars[i]);
-            mpc_y_vals.push_back(vars[i+1]);
+            if(i%2 == 0)
+            {
+              mpc_x_vals.push_back(vars[i]);
+            }
+            else
+            {
+              mpc_y_vals.push_back(vars[i]);  
+            }
+            
           }
 
           msgJson["mpc_x"] = mpc_x_vals;
